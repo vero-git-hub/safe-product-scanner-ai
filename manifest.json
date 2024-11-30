@@ -5,7 +5,8 @@
   "description": "A Chrome Extension to analyze product ingredients for safety.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "aiLanguageModelOriginTrial"
   ],
   "host_permissions": [
     "*://*/*"
@@ -26,5 +27,8 @@
       "matches": ["<all_urls>"],
       "js": ["js/content.js"]
     }
+  ],
+  "trial_tokens": [
+    "TOKEN_EXAMPLE"
   ]
 }
