@@ -1,34 +1,16 @@
 {
-  "manifest_version": 3,
   "name": "Safe Product Scanner",
   "version": "1.0",
-  "description": "A Chrome Extension to analyze product ingredients for safety.",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "aiLanguageModelOriginTrial"
-  ],
-  "host_permissions": [
-    "*://*/*"
-  ],
+  "manifest_version": 3,
   "background": {
-    "service_worker": "js/background.js"
+    "service_worker": "background.js"
   },
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "img/icon.png",
-      "48": "img/icon.png",
-      "128": "img/icon.png"
-    }
-  },
+  "permissions": ["aiLanguageModelOriginTrial"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["js/content.js"]
+      "js": ["content.js"]
     }
   ],
-  "trial_tokens": [
-    "TOKEN_EXAMPLE"
-  ]
+  "trial_tokens": ["EXAMPLE_TOKEN"]
 }

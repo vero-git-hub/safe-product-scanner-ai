@@ -2,23 +2,42 @@ console.log("Content script loaded successfully.");
 
 async function analyzeWithAI(selectedText) {
     console.log("Sending a request to analyze the text in background.js...");
+    showLoadingPopup(selectedText);
 
-    chrome.runtime.sendMessage(
-        { action: "analyzeText", text: selectedText },
-        (response) => {
-            if (chrome.runtime.lastError) {
-                console.error("Error interacting with background.js:", chrome.runtime.lastError.message);
-                return;
-            }
+    try {
+        const response = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Operation in background.js timed out."));
+            }, 30000);
 
-            if (response && response.success) {
-                console.log("Analysis result:", response.result);
-                showPopup(selectedText, response.result);
-            } else {
-                console.error("Error during text analysis:", response?.error || "Unknown error");
-            }
+            chrome.runtime.sendMessage(
+                { action: "analyzeText", text: selectedText },
+                (response) => {
+                    clearTimeout(timeout);
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message));
+                    } else {
+                        resolve(response);
+                    }
+                }
+            );
+        });
+
+        if (response.success) {
+            console.log("Analysis result:", response.result);
+            showPopup(selectedText, response.result);
+        } else {
+            console.error("Error during text analysis:", response.error);
+            showPopup(selectedText, `Error: ${response.error}`);
         }
-    );
+    } catch (error) {
+        console.error("Error interacting with background.js:", error.message);
+        showPopup(selectedText, `Error: ${error.message}`);
+    }
+}
+
+function showLoadingPopup(selectedText) {
+    showPopup(selectedText, "Loading...");
 }
 
 function showPopup(selectedText, analysisResult) {
@@ -48,7 +67,7 @@ function showPopup(selectedText, analysisResult) {
     }
 
     document.body.appendChild(popup);
-    setTimeout(() => popup.remove(), 5000);
+    //setTimeout(() => popup.remove(), 5000);
 }
 
 document.addEventListener('mouseup', () => {
