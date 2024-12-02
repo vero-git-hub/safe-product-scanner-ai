@@ -93,6 +93,19 @@ function showPopup(selectedText, analysisResult) {
             currentAbortController = null;
         }
     });
+
+    document.addEventListener('mousedown', (event) => {
+        if (!popup.contains(event.target)) {
+            console.log("Clicked outside the popup. Closing...");
+            popup.remove();
+
+            if (currentAbortController) {
+                console.log("Aborting ongoing request...");
+                currentAbortController.abort();
+                currentAbortController = null;
+            }
+        }
+    }, { once: true });
 }
 
 document.addEventListener('mouseup', () => {
