@@ -24,7 +24,6 @@ async function analyzeWithAI(selectedText) {
         });
 
         if (response.success) {
-            console.log("Analysis result:", response.result);
             showPopup(selectedText, response.result);
         } else {
             console.error("Error during text analysis:", response.error);

@@ -2,35 +2,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Message received in background.js:", message);
 
     if (message.action === "analyzeText") {
-        const selectedText = message.text;
-        console.log("Analyze request received for text:", selectedText);
+        const selectedText = message.text.trim();
 
         (async () => {
             if (chrome.aiOriginTrial && chrome.aiOriginTrial.languageModel) {
                 try {
-                    console.log("Prompt API is available.");
                     const capabilities = await chrome.aiOriginTrial.languageModel.capabilities();
-                    console.log("Model capabilities:", capabilities);
 
                     if (capabilities.available === 'readily') {
                         const session = await chrome.aiOriginTrial.languageModel.create({
-                            systemPrompt: 'You are an assistant specialized in analyzing product components and assessing their safety. Please respond in English only.',
+                            systemPrompt: 'You are a chemical analysis assistant. Your task is to determine if a given word represents a chemical component or substance that could be part of the composition of a medicine or cosmetic product. Respond strictly in English.',
                         });
 
                         try {
-                            console.log("Sending request to AI...");
                             const result = await session.prompt(
-                                `Check if this word "${selectedText}" is a component or substance of a medicine or cosmetic. Provide the response in English only.`
+                                `Check if "${selectedText}" is a chemical component or substance used in the composition of medicine or cosmetics?
+                                If no, answer only "This is not a chemical component or substance."
+                                If yes, answer "This is a chemical component.", and whether the component is safe for health, and how it affects health.`
                             );
 
-                            console.log("AI response:", result);
                             sendResponse({ success: true, result });
-                            console.log("Response sent:", { success: true, result });
                         } catch (error) {
                             console.error("Error during AI request:", error);
                             sendResponse({ success: false, error: error.message });
                         } finally {
-                            console.log("Destroying AI session...");
                             session.destroy();
                         }
                     } else {
