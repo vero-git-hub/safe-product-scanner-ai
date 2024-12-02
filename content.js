@@ -1,10 +1,11 @@
-console.log("Content script loaded successfully.");
-
 let currentAbortController = null;
+let currentRequestId = null;
 
 async function analyzeWithAI(selectedText) {
-    console.log("Sending a request to analyze the text in background.js...");
     showLoadingPopup(selectedText);
+
+    const requestId = Date.now();
+    currentRequestId = requestId;
 
     if (currentAbortController) {
         currentAbortController.abort();
@@ -30,6 +31,10 @@ async function analyzeWithAI(selectedText) {
             );
         });
 
+        if (requestId !== currentRequestId) {
+            return;
+        }
+
         if (response.success) {
             showPopup(selectedText, response.result);
         } else {
@@ -37,10 +42,17 @@ async function analyzeWithAI(selectedText) {
             showPopup(selectedText, `Error: ${response.error}`);
         }
     } catch (error) {
+        if (requestId !== currentRequestId) {
+            return;
+        }
+
         console.error("Error interacting with background.js:", error.message);
         showPopup(selectedText, `Error: ${error.message}`);
     } finally {
-        currentAbortController = null;
+        if (requestId === currentRequestId) {
+            currentAbortController = null;
+            currentRequestId = null;
+        }
     }
 }
 
@@ -88,7 +100,6 @@ function showPopup(selectedText, analysisResult) {
         popup.remove();
 
         if (currentAbortController) {
-            console.log("Aborting ongoing request...");
             currentAbortController.abort();
             currentAbortController = null;
         }
@@ -96,13 +107,12 @@ function showPopup(selectedText, analysisResult) {
 
     document.addEventListener('mousedown', (event) => {
         if (!popup.contains(event.target)) {
-            console.log("Clicked outside the popup. Closing...");
             popup.remove();
 
             if (currentAbortController) {
-                console.log("Aborting ongoing request...");
                 currentAbortController.abort();
                 currentAbortController = null;
+                currentRequestId = null;
             }
         }
     }, { once: true });

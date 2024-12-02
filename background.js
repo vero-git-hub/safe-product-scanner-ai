@@ -1,6 +1,4 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received in background.js:", message);
-
     if (message.action === "analyzeText") {
         const selectedText = message.text.trim();
 
