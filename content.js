@@ -1,8 +1,15 @@
 console.log("Content script loaded successfully.");
 
+let currentAbortController = null;
+
 async function analyzeWithAI(selectedText) {
     console.log("Sending a request to analyze the text in background.js...");
     showLoadingPopup(selectedText);
+
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
 
     try {
         const response = await new Promise((resolve, reject) => {
@@ -32,6 +39,8 @@ async function analyzeWithAI(selectedText) {
     } catch (error) {
         console.error("Error interacting with background.js:", error.message);
         showPopup(selectedText, `Error: ${error.message}`);
+    } finally {
+        currentAbortController = null;
     }
 }
 
@@ -55,7 +64,13 @@ function showPopup(selectedText, analysisResult) {
     popup.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
     popup.style.zIndex = '1000';
 
-    popup.innerHTML = `<strong>${selectedText}</strong><br>${analysisResult}`;
+    popup.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>${selectedText}</strong>
+            <button id="close-popup" style="background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
+        </div>
+        <div>${analysisResult}</div>
+    `;
 
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
@@ -66,10 +81,26 @@ function showPopup(selectedText, analysisResult) {
     }
 
     document.body.appendChild(popup);
-    //setTimeout(() => popup.remove(), 5000);
+
+    const closeButton = document.getElementById('close-popup');
+    closeButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        popup.remove();
+
+        if (currentAbortController) {
+            console.log("Aborting ongoing request...");
+            currentAbortController.abort();
+            currentAbortController = null;
+        }
+    });
 }
 
 document.addEventListener('mouseup', () => {
+    const popup = document.getElementById('ai-popup');
+    if (popup && popup.contains(event.target)) {
+        return;
+    }
+
     const selectedText = window.getSelection().toString().trim();
     if (selectedText) {
         analyzeWithAI(selectedText);
